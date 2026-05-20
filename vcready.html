@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VCReady — AI Pitch Intelligence for Web3 Founders</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+
+  /* ─── TOKENS ─── */
+  :root {
+    --navy:    #0a0f1e;
+    --navy2:   #0d1428;
+    --navy3:   #111c35;
+    --navy4:   #162040;
+    --accent:  #4f8ef7;
+    --accent2: #7eb3ff;
+    --accent3: #1a3a6e;
+    --green:   #22d87b;
+    --red:     #ff4f6a;
+    --amber:   #f5a623;
+    --white:   #f0f4ff;
+    --white2:  #c8d4f0;
+    --white3:  #8898c0;
+    --border:  rgba(79,142,247,0.15);
+    --border2: rgba(79,142,247,0.08);
+    --glass:   rgba(255,255,255,0.03);
+    --glass2:  rgba(255,255,255,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── PAGE ROUTING ─── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ─── BACKGROUND ─── */
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  .glow-orb {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    filter: blur(80px);
+  }
+  .glow-orb.a { width: 400px; height: 400px; background: rgba(79,142,247,0.08); top: -100px; right: -100px; }
+  .glow-orb.b { width: 300px; height: 300px; background: rgba(34,216,123,0.05); bottom: 100px; left: -100px; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,15,30,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 32px; height: 32px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: var(--navy);
+  }
+  .logo span { color: var(--white); }
+  .logo em { color: var(--accent); font-style: normal; }
+  .nav-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: var(--green);
+    border: 1px solid rgba(34,216,123,0.3);
+    padding: 3px 10px; border-radius: 20px;
+    background: rgba(34,216,123,0.06); letter-spacing: 1px;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; background: var(--accent);
+    color: var(--navy); border: none; border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: -0.3px;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; background: transparent;
+    color: var(--white2); border: 1px solid var(--border);
+    border-radius: 10px; font-size: 15px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: rgba(79,142,247,0.4); color: var(--white); background: var(--glass2); }
+
+
+  /* ══════════════════════════════════════════════
+     LANDING PAGE
+  ══════════════════════════════════════════════ */
+  .hero {
+    position: relative; z-index: 1;
+    padding: 80px 40px 60px;
+    max-width: 900px; margin: 0 auto; text-align: center;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--border);
+    padding: 6px 16px; border-radius: 20px; margin-bottom: 32px;
+    background: rgba(79,142,247,0.06);
+  }
+  .hero-tag::before {
+    content: ''; width: 6px; height: 6px;
+    background: var(--green); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -2px; margin-bottom: 24px;
+  }
+  h1 .accent { color: var(--accent); }
+
+  .hero-sub {
+    font-size: 18px; color: var(--white3);
+    line-height: 1.7; max-width: 580px; margin: 0 auto 40px;
+    font-weight: 300;
+  }
+
+  .cta-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  /* Metrics strip */
+  .metrics-strip {
+    display: flex; gap: 1px;
+    max-width: 700px; margin: 60px auto 0;
+    background: var(--border); border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .metric-cell {
+    flex: 1; background: var(--navy2); padding: 20px 16px; text-align: center;
+    transition: background 0.2s;
+  }
+  .metric-cell:hover { background: var(--navy3); }
+  .metric-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800; margin-bottom: 4px;
+  }
+  .metric-num.good { color: var(--green); }
+  .metric-num.warn { color: var(--amber); }
+  .metric-num.bad  { color: var(--red); }
+  .metric-label {
+    font-size: 10px; color: var(--white3);
+    letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Criteria grid */
+  .criteria-section {
+    position: relative; z-index: 1;
+    max-width: 900px; margin: 0 auto; padding: 0 40px 80px;
+  }
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--white3); margin-bottom: 32px; text-align: center;
+  }
+  .criteria-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+  }
+  .criteria-card {
+    background: var(--glass); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 20px; transition: all 0.2s;
+  }
+  .criteria-card:hover { border-color: var(--border); background: var(--glass2); }
+  .criteria-icon { font-size: 20px; margin-bottom: 10px; }
+  .criteria-name { font-size: 13px; font-weight: 500; color: var(--white2); margin-bottom: 4px; }
+  .criteria-desc { font-size: 11px; color: var(--white3); line-height: 1.5; }
+
+
+  /* ══════════════════════════════════════════════
+     UPLOAD PAGE
+  ══════════════════════════════════════════════ */
+  .upload-wrap {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto; padding: 60px 40px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px;
+  }
+  .page-sub { font-size: 14px; color: var(--white3); margin-bottom: 40px; }
+
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 16px; padding: 60px 40px;
+    text-align: center; cursor: pointer; transition: all 0.3s;
+    background: var(--glass); position: relative; overflow: hidden;
+  }
+  .drop-zone::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(79,142,247,0.04) 0%, transparent 70%);
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent); background: rgba(79,142,247,0.06);
+  }
+  .drop-icon { font-size: 48px; margin-bottom: 16px; }
+  .drop-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .drop-sub { font-size: 13px; color: var(--white3); margin-bottom: 24px; }
+  .drop-types { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .file-type-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; padding: 4px 12px;
+    border: 1px solid var(--border); border-radius: 20px;
+    color: var(--white3); background: var(--glass);
+  }
+  #file-input { display: none; }
+
+  .file-selected {
+    display: none; margin-top: 16px; padding: 16px 20px;
+    background: rgba(34,216,123,0.06); border: 1px solid rgba(34,216,123,0.2);
+    border-radius: 10px; align-items: center; gap: 12px;
+  }
+  .file-selected.show { display: flex; }
+  .file-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .file-size { font-size: 12px; color: var(--white3); }
+
+  .analyze-btn {
+    width: 100%; margin-top: 24px; padding: 18px;
+    background: var(--accent); color: var(--navy); border: none; border-radius: 12px;
+    font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: -0.5px;
+  }
+  .analyze-btn:hover:not(:disabled) { background: var(--accent2); }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .sample-row {
+    display: flex; align-items: center; gap: 16px; margin-top: 32px;
+    padding-top: 24px; border-top: 1px solid var(--border);
+  }
+  .sample-label { font-size: 12px; color: var(--white3); flex: 1; }
+  .sample-btn {
+    padding: 10px 20px; background: transparent;
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--white2); font-size: 13px; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .sample-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.06); }
+
+
+  /* ══════════════════════════════════════════════
+     PROGRESS PAGE
+  ══════════════════════════════════════════════ */
+  .progress-wrap {
+    position: relative; z-index: 1;
+    max-width: 540px; margin: 80px auto; padding: 0 40px; text-align: center;
+  }
+  .progress-icon-ring {
+    width: 100px; height: 100px; margin: 0 auto 32px;
+    border-radius: 50%; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .progress-icon-ring::before {
+    content: ''; position: absolute; inset: -2px; border-radius: 50%;
+    border: 2px solid transparent; border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-icon-ring span { font-size: 36px; }
+
+  .progress-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .progress-sub { font-size: 14px; color: var(--white3); margin-bottom: 40px; }
+
+  .progress-steps { text-align: left; max-width: 400px; margin: 0 auto; }
+  .progress-step {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 0; border-bottom: 1px solid var(--border2);
+    font-size: 14px; color: var(--white3); transition: all 0.3s;
+  }
+  .progress-step:last-child { border-bottom: none; }
+  .progress-step.active { color: var(--white); }
+  .progress-step.done   { color: var(--green); }
+  .step-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0; transition: all 0.3s;
+  }
+  .progress-step.active .step-dot { border-color: var(--accent); background: rgba(79,142,247,0.15); }
+  .progress-step.done   .step-dot { border-color: var(--green); background: rgba(34,216,123,0.15); color: var(--green); }
+
+
+  /* ══════════════════════════════════════════════
+     RESULTS PAGE
+  ══════════════════════════════════════════════ */
+  .results-wrap {
+    position: relative; z-index: 1;
+    max-width: 1000px; margin: 0 auto; padding: 40px;
+  }
+  .results-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 24px; margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .results-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px;
+  }
+  .results-deck { font-size: 13px; color: var(--white3); }
+
+  .score-ring-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 36px; min-width: 180px;
+  }
+  .score-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -3px;
+  }
+  .score-denom { font-size: 16px; color: var(--white3); }
+  .score-verdict {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 20px;
+  }
+
+  /* Tabs */
+  .results-tabs {
+    display: flex; gap: 4px; margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto; padding-bottom: 0; scrollbar-width: none;
+  }
+  .results-tabs::-webkit-scrollbar { display: none; }
+  .results-tab {
+    padding: 10px 20px; font-size: 13px; font-weight: 500;
+    color: var(--white3); cursor: pointer; border: none; background: none;
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+    white-space: nowrap; margin-bottom: -1px;
+  }
+  .results-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .results-tab:hover:not(.active) { color: var(--white2); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Breakdown grid */
+  .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .breakdown-grid { grid-template-columns: 1fr; } }
+
+  .breakdown-card {
+    background: var(--glass); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 20px; transition: all 0.2s;
+  }
+  .breakdown-card:hover { border-color: var(--border); background: var(--glass2); }
+  .bc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .bc-name { font-size: 13px; font-weight: 600; }
+  .bc-score-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; padding: 3px 10px; border-radius: 20px;
+  }
+  .score-high { background: rgba(34,216,123,0.10); color: var(--green);  border: 1px solid rgba(34,216,123,0.2); }
+  .score-mid  { background: rgba(245,166,35,0.10); color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+  .score-low  { background: rgba(255,79,106,0.10); color: var(--red);    border: 1px solid rgba(255,79,106,0.2); }
+  .bc-bar-bg { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-bottom: 12px; }
+  .bc-bar    { height: 4px; border-radius: 2px; transition: width 1s ease; }
+  .bc-feedback { font-size: 12px; color: var(--white3); line-height: 1.6; }
+
+  /* VC Warnings */
+  .hate-list { display: flex; flex-direction: column; gap: 12px; }
+  .hate-item {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: rgba(255,79,106,0.05); border: 1px solid rgba(255,79,106,0.15);
+    border-radius: 12px; padding: 16px;
+  }
+  .hate-icon  { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .hate-title { font-size: 14px; font-weight: 600; color: var(--red); margin-bottom: 4px; }
+  .hate-desc  { font-size: 13px; color: var(--white3); line-height: 1.6; }
+
+  /* Missing slides */
+  .missing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .missing-card {
+    background: rgba(245,166,35,0.04); border: 1px solid rgba(245,166,35,0.15);
+    border-radius: 10px; padding: 16px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .missing-icon { font-size: 22px; }
+  .missing-name { font-size: 13px; font-weight: 600; color: var(--amber); margin-bottom: 4px; }
+  .missing-why  { font-size: 12px; color: var(--white3); line-height: 1.5; }
+
+  /* Rewrites */
+  .rewrite-intro {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: rgba(79,142,247,0.06); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 24px;
+    font-size: 13px; color: var(--white2); line-height: 1.6;
+  }
+  .rewrite-sections { display: flex; flex-direction: column; gap: 16px; }
+  .rewrite-card {
+    background: var(--glass); border: 1px solid var(--border2);
+    border-radius: 12px; overflow: hidden;
+  }
+  .rc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: var(--glass2);
+    border-bottom: 1px solid var(--border2); cursor: pointer;
+  }
+  .rc-title { font-size: 14px; font-weight: 600; }
+  .rc-chevron { font-size: 16px; color: var(--white3); transition: transform 0.2s; }
+  .rc-body { padding: 18px; display: none; }
+  .rewrite-card.open .rc-body    { display: block; }
+  .rewrite-card.open .rc-chevron { transform: rotate(180deg); }
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-block { border-radius: 8px; padding: 14px; }
+  .ba-block.before { background: rgba(255,79,106,0.05); border: 1px solid rgba(255,79,106,0.12); }
+  .ba-block.after  { background: rgba(34,216,123,0.05); border: 1px solid rgba(34,216,123,0.12); }
+  .ba-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .ba-block.before .ba-label { color: var(--red); }
+  .ba-block.after  .ba-label { color: var(--green); }
+  .ba-text { font-size: 13px; line-height: 1.7; color: var(--white2); }
+  .rw-why {
+    margin-top: 12px; font-size: 12px; color: var(--accent);
+    padding: 10px 14px; background: rgba(79,142,247,0.06);
+    border-radius: 8px; border-left: 3px solid var(--accent);
+  }
+
+  /* Export */
+  .export-wrap { max-width: 500px; margin: 0 auto; }
+  .export-card {
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 16px; padding: 32px; text-align: center; margin-bottom: 20px;
+  }
+  .export-icon  { font-size: 48px; margin-bottom: 16px; }
+  .export-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .export-sub   { font-size: 14px; color: var(--white3); margin-bottom: 28px; line-height: 1.6; }
+  .export-checklist {
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  .export-checklist-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .export-item { font-size: 12px; color: var(--white3); padding: 4px 0; }
+
+  /* Loading dots */
+  .ai-loading {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px; color: var(--white3); font-size: 14px;
+  }
+  .ai-loading-dots span {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--accent); border-radius: 50%; margin: 0 2px;
+    animation: bounce 1.2s infinite;
+  }
+  .ai-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0.6)} 40%{transform:scale(1)} }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; right: 30px; z-index: 999;
+    background: var(--navy3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px;
+    font-size: 13px; color: var(--white);
+    display: none; align-items: center; gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideUp 0.3s ease;
+  }
+  .toast.show { display: flex; }
+  @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 3px; }
+
+  /* Responsive nav */
+  @media (max-width: 480px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .criteria-section { padding: 0 20px 60px; }
+    .upload-wrap { padding: 40px 20px; }
+    .results-wrap { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── Global Background ─── -->
+<div class="grid-bg"></div>
+<div class="glow-orb a"></div>
+<div class="glow-orb b"></div>
+
+<!-- ─── Navigation ─── -->
+<nav>
+  <div class="logo" onclick="showPage('landing')">
+    <div class="logo-mark">V</div>
+    <span>VC<em>Ready</em></span>
+  </div>
+  <div class="nav-badge">FREE BETA</div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE: LANDING
+══════════════════════════════════════════════ -->
+<div id="page-landing" class="page active">
+
+  <div class="hero">
+    <div class="hero-tag">AI-Powered Pitch Intelligence</div>
+    <h1>Your deck, through<br><span class="accent">a VC's eyes.</span></h1>
+    <p class="hero-sub">
+      Upload your pitch deck and get a full analysis from our AI analyst —
+      trained on how top crypto VCs actually evaluate deals.
+    </p>
+    <div class="cta-row">
+      <button class="btn-primary" onclick="showPage('upload')">
+        &#8593; Analyze My Deck
+      </button>
+      <button class="btn-ghost" onclick="runSampleAnalysis()">
+        See Sample Report
+      </button>
+    </div>
+
+    <div class="metrics-strip">
+      <div class="metric-cell">
+        <div class="metric-num good">11</div>
+        <div class="metric-label">Criteria Scored</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num warn">VC</div>
+        <div class="metric-label">Grade Assigned</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num good">AI</div>
+        <div class="metric-label">Rewrites</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num bad">$0</div>
+        <div class="metric-label">Cost to You</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="criteria-section">
+    <div class="section-label">What gets analyzed</div>
+    <div class="criteria-grid">
+      <div class="criteria-card">
+        <div class="criteria-icon">&#127919;</div>
+        <div class="criteria-name">Problem Clarity</div>
+        <div class="criteria-desc">Does your pain point land in one sentence?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128161;</div>
+        <div class="criteria-name">Solution Clarity</div>
+        <div class="criteria-desc">Is the product explanation investor-ready?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128202;</div>
+        <div class="criteria-name">Market Size</div>
+        <div class="criteria-desc">TAM/SAM/SOM with credible sourcing?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#129689;</div>
+        <div class="criteria-name">Token Utility</div>
+        <div class="criteria-desc">Real utility vs. manufactured scarcity?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128640;</div>
+        <div class="criteria-name">Go-to-Market</div>
+        <div class="criteria-desc">First 1,000 users — credible plan?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128176;</div>
+        <div class="criteria-name">Revenue Model</div>
+        <div class="criteria-desc">Path to monetization is clear?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128200;</div>
+        <div class="criteria-name">Traction</div>
+        <div class="criteria-desc">Data beats promises. Do you have any?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128101;</div>
+        <div class="criteria-name">Team Strength</div>
+        <div class="criteria-desc">Why this team? Why now?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#9876;&#65039;</div>
+        <div class="criteria-name">Competition</div>
+        <div class="criteria-desc">Honest competitive positioning?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#128214;</div>
+        <div class="criteria-name">Narrative</div>
+        <div class="criteria-desc">Does the story arc compel investment?</div>
+      </div>
+      <div class="criteria-card">
+        <div class="criteria-icon">&#127970;</div>
+        <div class="criteria-name">Investor Readiness</div>
+        <div class="criteria-desc">Deal structure, ask, use of funds clear?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE: UPLOAD
+══════════════════════════════════════════════ -->
+<div id="page-upload" class="page">
+  <div class="upload-wrap">
+    <div class="page-title">Upload Your Deck</div>
+    <div class="page-sub">Supports PDF and PowerPoint files up to 50 MB</div>
+
+    <div class="drop-zone" id="drop-zone"
+         onclick="document.getElementById('file-input').click()">
+      <div class="drop-icon">&#128202;</div>
+      <div class="drop-title">Drop your pitch deck here</div>
+      <div class="drop-sub">or click to browse your files</div>
+      <div class="drop-types">
+        <span class="file-type-badge">PDF</span>
+        <span class="file-type-badge">PPTX</span>
+        <span class="file-type-badge">PPT</span>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.pptx,.ppt"
+             onchange="handleFile(this.files[0])">
+    </div>
+
+    <div class="file-selected" id="file-selected">
+      <span>&#9989;</span>
+      <span class="file-name" id="file-name-display">deck.pdf</span>
+      <span class="file-size" id="file-size-display">2.4 MB</span>
+    </div>
+
+    <button class="analyze-btn" id="analyze-btn" disabled onclick="startAnalysis()">
+      Run VC Analysis &#8594;
+    </button>
+
+    <div class="sample-row">
+      <div class="sample-label">
+        No deck ready? Try a realistic sample Web3 pitch deck.
+      </div>
+      <button class="sample-btn" onclick="runSampleAnalysis()">Use Sample</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE: PROGRESS
+══════════════════════════════════════════════ -->
+<div id="page-progress" class="page">
+  <div class="progress-wrap">
+    <div class="progress-icon-ring">
+      <span>&#128269;</span>
+    </div>
+    <div class="progress-title">Analyzing your deck</div>
+    <div class="progress-sub">Running deep VC intelligence analysis...</div>
+
+    <div class="progress-steps">
+      <div class="progress-step" id="step-0">
+        <div class="step-dot"></div>
+        <span>Parsing slide content</span>
+      </div>
+      <div class="progress-step" id="step-1">
+        <div class="step-dot"></div>
+        <span>Evaluating VC readiness criteria</span>
+      </div>
+      <div class="progress-step" id="step-2">
+        <div class="step-dot"></div>
+        <span>Scoring narrative &amp; positioning</span>
+      </div>
+      <div class="progress-step" id="step-3">
+        <div class="step-dot"></div>
+        <span>Identifying VC red flags</span>
+      </div>
+      <div class="progress-step" id="step-4">
+        <div class="step-dot"></div>
+        <span>Generating AI rewrites</span>
+      </div>
+      <div class="progress-step" id="step-5">
+        <div class="step-dot"></div>
+        <span>Compiling investor report</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE: RESULTS
+══════════════════════════════════════════════ -->
+<div id="page-results" class="page">
+  <div class="results-wrap">
+
+    <!-- Header row -->
+    <div class="results-header">
+      <div>
+        <div class="results-title">VC Readiness Report</div>
+        <div class="results-deck" id="results-deck-name">Sample Deck</div>
+      </div>
+      <div class="score-ring-wrap">
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <div class="score-number" id="main-score">--</div>
+          <div class="score-denom">/100</div>
+        </div>
+        <div class="score-verdict" id="score-verdict">Calculating...</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="results-tabs">
+      <button class="results-tab active" onclick="switchTab(this,'breakdown')">&#128202; Score Breakdown</button>
+      <button class="results-tab" onclick="switchTab(this,'warnings')">&#9888;&#65039; VC Warnings</button>
+      <button class="results-tab" onclick="switchTab(this,'missing')">&#128203; Missing Slides</button>
+      <button class="results-tab" onclick="switchTab(this,'rewrites')">&#9997;&#65039; AI Rewrites</button>
+      <button class="results-tab" onclick="switchTab(this,'export')">&#11015;&#65039; Export</button>
+    </div>
+
+    <!-- Tab: Breakdown -->
+    <div class="tab-panel active" id="tab-breakdown">
+      <div class="ai-loading" id="breakdown-loading">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <span>AI is analyzing your deck...</span>
+      </div>
+      <div class="breakdown-grid" id="breakdown-grid" style="display:none"></div>
+    </div>
+
+    <!-- Tab: VC Warnings -->
+    <div class="tab-panel" id="tab-warnings">
+      <div class="ai-loading" id="warnings-loading">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <span>Identifying VC red flags...</span>
+      </div>
+      <div class="hate-list" id="hate-list" style="display:none"></div>
+    </div>
+
+    <!-- Tab: Missing Slides -->
+    <div class="tab-panel" id="tab-missing">
+      <div class="ai-loading" id="missing-loading">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <span>Checking for missing slides...</span>
+      </div>
+      <div id="missing-content" style="display:none">
+        <p style="font-size:13px;color:var(--white3);margin-bottom:20px;line-height:1.7"
+           id="missing-intro"></p>
+        <div class="missing-grid" id="missing-grid"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Rewrites -->
+    <div class="tab-panel" id="tab-rewrites">
+      <div class="rewrite-intro">
+        &#128161;
+        <span>
+          These are AI-generated rewrites of your weakest slide sections,
+          optimized for how Series A crypto VCs actually read decks —
+          punchy, specific, zero fluff.
+        </span>
+      </div>
+      <div class="ai-loading" id="rewrites-loading">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <span>Writing investor-grade copy...</span>
+      </div>
+      <div class="rewrite-sections" id="rewrite-sections" style="display:none"></div>
+    </div>
+
+    <!-- Tab: Export -->
+    <div class="tab-panel" id="tab-export">
+      <div class="export-wrap">
+        <div class="export-card">
+          <div class="export-icon">&#128196;</div>
+          <div class="export-title">Download Full Report</div>
+          <div class="export-sub">
+            Your complete VC readiness analysis as a professionally formatted report —
+            ready to share with advisors or use to rebuild your deck.
+          </div>
+          <button class="btn-primary" onclick="downloadReport()"
+                  style="width:100%;justify-content:center">
+            &#11015; Download Report
+          </button>
+        </div>
+
+        <div class="export-checklist">
+          <div class="export-checklist-title">What's in your report</div>
+          <div class="export-item">&#10003; Overall VC readiness score with grade</div>
+          <div class="export-item">&#10003; Detailed scoring for all 11 criteria</div>
+          <div class="export-item">&#10003; What VCs hate — specific warnings</div>
+          <div class="export-item">&#10003; Missing slide recommendations</div>
+          <div class="export-item">&#10003; AI-rewritten sections (investor-optimized)</div>
+          <div class="export-item">&#10003; Strategic action plan</div>
+        </div>
+
+        <button class="btn-ghost" onclick="showPage('upload')"
+                style="width:100%;justify-content:center;margin-top:8px">
+          &#8593; Analyze Another Deck
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ─── Toast ─── -->
+<div class="toast" id="toast">
+  <span id="toast-msg">Done!</span>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script>
+// PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ──────────────────────────────────────
+// STATE
+// ──────────────────────────────────────
+let currentDeckText = '';
+let currentDeckName = 'Your Deck';
+let analysisResult  = null;
+
+// ──────────────────────────────────────
+// PAGE ROUTING
+// ──────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ──────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ──────────────────────────────────────
+// DRAG & DROP
+// ──────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+// ──────────────────────────────────────
+// FILE HANDLING & PDF PARSING
+// ──────────────────────────────────────
+async function handleFile(file) {
+  if (!file) return;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  currentDeckName = file.name;
+
+  document.getElementById('file-name-display').textContent = file.name;
+  document.getElementById('file-size-display').textContent =
+    (file.size / 1024 / 1024).toFixed(1) + ' MB';
+  document.getElementById('file-selected').classList.add('show');
+  document.getElementById('analyze-btn').disabled = false;
+
+  if (ext === 'pdf') {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = `PDF: ${file.name} — ${pdf.numPages} slides\n`;
+
+      for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+        const page    = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ').trim();
+        if (pageText) {
+          text += `\n\n--- SLIDE ${i} ---\n${pageText}`;
+        }
+      }
+      currentDeckText = text.trim() ||
+        '[PDF loaded but contains no extractable text — likely image-based slides. ' +
+        'Analysis will focus on structure and available metadata.]';
+    } catch (err) {
+      currentDeckText = `[Could not parse PDF text: ${err.message}]`;
+      showToast('PDF parsed with limited text extraction.', 4000);
+    }
+  } else {
+    // PPTX / PPT — no client-side parser; send filename as context
+    currentDeckText =
+      `[PowerPoint file: ${file.name}. ` +
+      `File size: ${(file.size / 1024).toFixed(0)} KB. ` +
+      `Analyze based on the filename and any available metadata. ` +
+      `Provide realistic feedback for a Web3 pitch deck of this type.]`;
+    showToast('PowerPoint loaded — text extraction limited.', 3000);
+  }
+}
+
+// ──────────────────────────────────────
+// SAMPLE DECK
+// ──────────────────────────────────────
+const SAMPLE_DECK = `
+--- SLIDE 1 ---
+NexaBridge — The Future of Cross-Chain DeFi
+Connecting liquidity across 50+ blockchains. Seed Round — Raising $4M.
+
+--- SLIDE 2 ---
+The Problem
+DeFi is fragmented. Over $180B in TVL is siloed across 50+ chains with no
+efficient cross-chain routing. Traders lose 3–8% on every cross-chain swap
+to slippage and bridge fees. Current bridges take 15 minutes average and
+fail 12% of the time. This is not a niche problem — it is the #1 UX barrier
+in DeFi today.
+
+--- SLIDE 3 ---
+Our Solution
+NexaBridge is a universal liquidity aggregation protocol. Our AI-powered
+routing engine finds the optimal path across chains in real time.
+Sub-30-second settlement. 0.1% base fee. Fully non-custodial.
+We integrate with existing DEXs — no liquidity fragmentation.
+
+--- SLIDE 4 ---
+Market Size
+TAM: $2 trillion global crypto market
+SAM: $400B cross-chain volume per year
+SOM: We plan to capture 2% market share in Year 2
+(Source: DeFiLlama, Messari 2024)
+
+--- SLIDE 5 ---
+Token: $NEXA
+Governance token. Staking rewards. Fee sharing with stakers.
+Total supply: 1 billion. 40% community/ecosystem. 20% team (2-year cliff,
+3-year vest). 10% seed investors (1-year cliff). 15% treasury. 15% liquidity.
+Token unlocks are linear post-cliff.
+
+--- SLIDE 6 ---
+Go-to-Market
+Phase 1: Integration with top 5 DEX aggregators (1inch, Paraswap, Odos).
+Phase 2: Direct protocol partnerships — 10 signed LOIs in progress.
+Phase 3: Consumer-facing app with social trading features.
+Launch: Q2 2025. Target: $50M monthly volume in 6 months.
+
+--- SLIDE 7 ---
+Traction
+Currently in private beta with 150 waitlist signups.
+3 partner protocols have signed MOUs.
+No revenue or on-chain activity yet.
+
+--- SLIDE 8 ---
+The Team
+John Smith — CEO: ex-McKinsey 3 years, crypto since 2020, no prior exits
+Sarah Lee — CTO: former Google SWE (4 years), no prior Web3 projects
+Mike Chen — BD: ex-Binance BD team (2 years)
+No advisors listed.
+
+--- SLIDE 9 ---
+Competition
+Stargate Finance, LayerZero, Wormhole, Axelar.
+We are better because: faster, cheaper, more chains.
+Competitive moat: our proprietary AI routing algorithm.
+
+--- SLIDE 10 ---
+The Ask
+Raising $4M seed at $40M FDV (token-based).
+Use of funds: 50% development, 30% marketing, 20% operations.
+Projected ROI: 10x in 18 months.
+`;
+
+async function runSampleAnalysis() {
+  currentDeckText = SAMPLE_DECK;
+  currentDeckName = 'NexaBridge_Seed_Deck.pdf';
+  await startAnalysis();
+}
+
+// ──────────────────────────────────────
+// ANALYSIS ORCHESTRATION
+// ──────────────────────────────────────
+async function startAnalysis() {
+  showPage('progress');
+  resetResults();
+  animateProgressSteps();
+
+  try {
+    const result = await callVCAnalysisAPI(currentDeckText, currentDeckName);
+    analysisResult = result;
+
+    // Wait for progress animation to finish, then show results
+    setTimeout(() => {
+      populateResults(result);
+      showPage('results');
+    }, 8800);
+
+  } catch (err) {
+    console.error('Analysis error:', err);
+    showToast('Analysis failed. Check your connection and try again.', 5000);
+    setTimeout(() => showPage('upload'), 3000);
+  }
+}
+
+function animateProgressSteps() {
+  const steps  = ['step-0','step-1','step-2','step-3','step-4','step-5'];
+  const delays = [300, 1400, 2800, 4200, 5800, 7400];
+
+  steps.forEach((id, i) => {
+    // Mark previous as done
+    if (i > 0) {
+      setTimeout(() => {
+        const prev = document.getElementById(steps[i - 1]);
+        prev.className = 'progress-step done';
+        prev.querySelector('.step-dot').textContent = '✓';
+      }, delays[i] - 100);
+    }
+    // Mark current as active
+    setTimeout(() => {
+      document.getElementById(id).className = 'progress-step active';
+    }, delays[i]);
+  });
+
+  // Mark last step done
+  setTimeout(() => {
+    const last = document.getElementById(steps[steps.length - 1]);
+    last.className = 'progress-step done';
+    last.querySelector('.step-dot').textContent = '✓';
+  }, delays[delays.length - 1] + 800);
+}
+
+function resetResults() {
+  ['breakdown','warnings','missing','rewrites'].forEach(name => {
+    const loader = document.getElementById(name + '-loading');
+    if (loader) loader.style.display = 'flex';
+  });
+  const bgrid = document.getElementById('breakdown-grid');
+  if (bgrid) bgrid.style.display = 'none';
+  const hlist = document.getElementById('hate-list');
+  if (hlist) hlist.style.display = 'none';
+  const mc = document.getElementById('missing-content');
+  if (mc) mc.style.display = 'none';
+  const rs = document.getElementById('rewrite-sections');
+  if (rs) rs.style.display = 'none';
+
+  document.getElementById('main-score').textContent = '--';
+  document.getElementById('score-verdict').textContent = 'Calculating...';
+
+  // Reset tabs to first tab
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-breakdown').classList.add('active');
+  document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.results-tab')[0].classList.add('active');
+}
+
+// ──────────────────────────────────────
+// ANTHROPIC API CALL
+// ──────────────────────────────────────
+async function callVCAnalysisAPI(deckText, deckName) {
+  const systemPrompt =
+    `You are a senior crypto VC analyst at a top-tier Web3 fund (think Multicoin Capital, ` +
+    `Paradigm, a16z Crypto, Animoca Brands). You have reviewed 800+ pitch decks over 6 years. ` +
+    `You are direct, strategic, and unsparing. You surface the real problems — not polished, ` +
+    `diplomatic feedback. You know exactly what kills deals at a partner meeting.`;
+
+  const userPrompt = `Analyze this pitch deck and return ONLY a JSON object. No markdown. No explanation. Just raw JSON.
+
+DECK: ${deckName}
+
+CONTENT:
+${deckText.slice(0, 7000)}
+
+Return this exact JSON structure:
+{
+  "overall_score": <integer 0-100>,
+  "verdict": "<one of: NOT READY | NEEDS WORK | PROMISING | VC READY | EXCEPTIONAL>",
+  "criteria": [
+    {
+      "name": "Problem Clarity",
+      "icon": "🎯",
+      "score": <integer 0-10>,
+      "feedback": "<2-3 direct sentences referencing what's actually in the deck>"
+    },
+    { "name": "Solution Clarity", "icon": "💡", "score": <0-10>, "feedback": "..." },
+    { "name": "Market Size",      "icon": "📊", "score": <0-10>, "feedback": "..." },
+    { "name": "Token Utility",    "icon": "🪙", "score": <0-10>, "feedback": "..." },
+    { "name": "Go-to-Market",     "icon": "🚀", "score": <0-10>, "feedback": "..." },
+    { "name": "Revenue Model",    "icon": "💰", "score": <0-10>, "feedback": "..." },
+    { "name": "Traction",         "icon": "📈", "score": <0-10>, "feedback": "..." },
+    { "name": "Team Strength",    "icon": "👥", "score": <0-10>, "feedback": "..." },
+    { "name": "Competition",      "icon": "⚔️", "score": <0-10>, "feedback": "..." },
+    { "name": "Narrative",        "icon": "📖", "score": <0-10>, "feedback": "..." },
+    { "name": "Investor Readiness","icon":"🏦", "score": <0-10>, "feedback": "..." }
+  ],
+  "vc_hate": [
+    {
+      "title": "<specific, punchy warning title>",
+      "description": "<exactly why this is a deal-killer, referencing the actual deck>"
+    }
+  ],
+  "missing_slides": [
+    {
+      "icon": "📋",
+      "name": "<name of missing slide>",
+      "why": "<one sentence: why every serious VC expects this>"
+    }
+  ],
+  "rewrites": [
+    {
+      "section": "<section name>",
+      "original": "<exact quote or close paraphrase of what the deck says>",
+      "rewritten": "<your investor-grade rewrite — specific, confident, defensible>",
+      "why": "<one sentence on why this version is stronger>"
+    }
+  ]
+}
+
+Critical rules:
+- Be brutally honest. Real VCs don't sugarcoat; neither should you.
+- Every feedback item must reference something specific from the deck.
+- vc_hate: 3-5 items that are genuinely damaging, not generic advice.
+- missing_slides: only slides that are truly absent. If the deck is complete, return [].
+- rewrites: 3-5 sections. Focus on the weakest, most impactful areas.
+- Rewritten copy must sound like a16z-grade messaging: confident, specific, data-backed.`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`API ${response.status}: ${errText}`);
+  }
+
+  const data  = await response.json();
+  const text  = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+
+  return JSON.parse(clean);
+}
+
+// ──────────────────────────────────────
+// POPULATE RESULTS UI
+// ──────────────────────────────────────
+function populateResults(r) {
+  // ── Header ──
+  document.getElementById('results-deck-name').textContent = currentDeckName;
+
+  // ── Score ──
+  const score   = r.overall_score || 0;
+  const scoreEl = document.getElementById('main-score');
+  scoreEl.textContent = score;
+  scoreEl.style.color =
+    score >= 75 ? 'var(--green)' :
+    score >= 50 ? 'var(--amber)' : 'var(--red)';
+
+  const verdictMap = {
+    'NOT READY':   { bg: 'rgba(255,79,106,0.12)',  color: 'var(--red)',    border: 'rgba(255,79,106,0.3)'  },
+    'NEEDS WORK':  { bg: 'rgba(245,166,35,0.12)',  color: 'var(--amber)',  border: 'rgba(245,166,35,0.3)'  },
+    'PROMISING':   { bg: 'rgba(79,142,247,0.12)',  color: 'var(--accent)', border: 'rgba(79,142,247,0.3)'  },
+    'VC READY':    { bg: 'rgba(34,216,123,0.12)',  color: 'var(--green)',  border: 'rgba(34,216,123,0.3)'  },
+    'EXCEPTIONAL': { bg: 'rgba(34,216,123,0.20)',  color: 'var(--green)',  border: 'rgba(34,216,123,0.5)'  }
+  };
+  const vc = verdictMap[r.verdict] || verdictMap['NEEDS WORK'];
+  const verdictEl = document.getElementById('score-verdict');
+  verdictEl.textContent = r.verdict || 'ASSESSED';
+  verdictEl.style.cssText =
+    `background:${vc.bg};color:${vc.color};` +
+    `border:1px solid ${vc.border};` +
+    `font-family:'IBM Plex Mono',monospace;font-size:11px;` +
+    `letter-spacing:1.5px;text-transform:uppercase;` +
+    `padding:4px 12px;border-radius:20px`;
+
+  // ── Breakdown ──
+  const grid = document.getElementById('breakdown-grid');
+  grid.innerHTML = '';
+  (r.criteria || []).forEach(c => {
+    const sc = c.score || 0;
+    const cls  = sc >= 7 ? 'score-high' : sc >= 5 ? 'score-mid' : 'score-low';
+    const barC = sc >= 7 ? 'var(--green)' : sc >= 5 ? 'var(--amber)' : 'var(--red)';
+    grid.innerHTML += `
+      <div class="breakdown-card">
+        <div class="bc-header">
+          <div class="bc-name">${escHtml(c.icon)} ${escHtml(c.name)}</div>
+          <div class="bc-score-badge ${cls}">${sc}/10</div>
+        </div>
+        <div class="bc-bar-bg">
+          <div class="bc-bar" style="width:${sc * 10}%;background:${barC}"></div>
+        </div>
+        <div class="bc-feedback">${escHtml(c.feedback)}</div>
+      </div>`;
+  });
+  document.getElementById('breakdown-loading').style.display = 'none';
+  grid.style.display = 'grid';
+
+  // ── VC Warnings ──
+  const hateList = document.getElementById('hate-list');
+  hateList.innerHTML = '';
+  (r.vc_hate || []).forEach(h => {
+    hateList.innerHTML += `
+      <div class="hate-item">
+        <div class="hate-icon">🚨</div>
+        <div>
+          <div class="hate-title">${escHtml(h.title)}</div>
+          <div class="hate-desc">${escHtml(h.description)}</div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('warnings-loading').style.display = 'none';
+  hateList.style.display = 'flex';
+
+  // ── Missing Slides ──
+  const missingGrid = document.getElementById('missing-grid');
+  const missingIntro = document.getElementById('missing-intro');
+  missingGrid.innerHTML = '';
+  const missing = r.missing_slides || [];
+
+  if (missing.length === 0) {
+    missingIntro.textContent =
+      '✅ Your deck covers all the key slide categories VCs expect. No critical gaps detected.';
+  } else {
+    missingIntro.textContent =
+      `Your deck is missing ${missing.length} important slide${missing.length > 1 ? 's' : ''} ` +
+      `that VCs typically expect. Adding these would meaningfully strengthen your pitch.`;
+    missing.forEach(m => {
+      missingGrid.innerHTML += `
+        <div class="missing-card">
+          <div class="missing-icon">${escHtml(m.icon || '📋')}</div>
+          <div>
+            <div class="missing-name">${escHtml(m.name)}</div>
+            <div class="missing-why">${escHtml(m.why)}</div>
+          </div>
+        </div>`;
+    });
+  }
+  document.getElementById('missing-loading').style.display = 'none';
+  document.getElementById('missing-content').style.display = 'block';
+
+  // ── Rewrites ──
+  const rewriteSections = document.getElementById('rewrite-sections');
+  rewriteSections.innerHTML = '';
+  (r.rewrites || []).forEach((rw, i) => {
+    const id = `rw-card-${i}`;
+    rewriteSections.innerHTML += `
+      <div class="rewrite-card" id="${id}">
+        <div class="rc-header" onclick="toggleRewrite('${id}')">
+          <div class="rc-title">✏️ ${escHtml(rw.section)}</div>
+          <div class="rc-chevron">▾</div>
+        </div>
+        <div class="rc-body">
+          <div class="before-after">
+            <div class="ba-block before">
+              <div class="ba-label">❌ Original</div>
+              <div class="ba-text">${escHtml(rw.original)}</div>
+            </div>
+            <div class="ba-block after">
+              <div class="ba-label">✅ AI Rewrite</div>
+              <div class="ba-text">${escHtml(rw.rewritten)}</div>
+            </div>
+          </div>
+          <div class="rw-why">💬 ${escHtml(rw.why)}</div>
+        </div>
+      </div>`;
+  });
+  // Open first rewrite by default
+  if (r.rewrites && r.rewrites.length > 0) {
+    document.getElementById('rw-card-0').classList.add('open');
+  }
+  document.getElementById('rewrites-loading').style.display = 'none';
+  rewriteSections.style.display = 'flex';
+}
+
+// ──────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────
+function switchTab(btn, name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.results-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ──────────────────────────────────────
+// ACCORDION TOGGLE
+// ──────────────────────────────────────
+function toggleRewrite(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ──────────────────────────────────────
+// EXPORT / DOWNLOAD
+// ──────────────────────────────────────
+function downloadReport() {
+  if (!analysisResult) {
+    showToast('No analysis to export yet.');
+    return;
+  }
+  showToast('Preparing your report...');
+
+  const r     = analysisResult;
+  const score = r.overall_score;
+  const date  = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  const bar = (n, max = 10) => {
+    const filled = Math.round((n / max) * 20);
+    return '█'.repeat(filled) + '░'.repeat(20 - filled);
+  };
+
+  const report = [
+    '╔══════════════════════════════════════════════════════════════╗',
+    '║              V C R E A D Y  —  PITCH INTELLIGENCE           ║',
+    '╚══════════════════════════════════════════════════════════════╝',
+    '',
+    `  DECK    : ${currentDeckName}`,
+    `  DATE    : ${date}`,
+    `  SCORE   : ${score}/100  —  ${r.verdict}`,
+    '',
+    '══════════════════════════════════════════════════════════════',
+    '  CRITERIA BREAKDOWN',
+    '══════════════════════════════════════════════════════════════',
+    '',
+    ...(r.criteria || []).map(c =>
+      `  ${c.name.padEnd(22)} ${bar(c.score)}  ${c.score}/10\n` +
+      `  ${c.feedback}\n`
+    ),
+    '══════════════════════════════════════════════════════════════',
+    '  WHAT VCs HATE ABOUT YOUR DECK',
+    '══════════════════════════════════════════════════════════════',
+    '',
+    ...(r.vc_hate || []).map((h, i) =>
+      `  ${i + 1}. ${h.title}\n     ${h.description}\n`
+    ),
+    '══════════════════════════════════════════════════════════════',
+    '  MISSING SLIDES',
+    '══════════════════════════════════════════════════════════════',
+    '',
+    ...((r.missing_slides || []).length === 0
+      ? ['  No critical missing slides detected.\n']
+      : (r.missing_slides || []).map((m, i) =>
+          `  ${i + 1}. ${m.name}\n     ${m.why}\n`
+        )
+    ),
+    '══════════════════════════════════════════════════════════════',
+    '  AI REWRITES — INVESTOR-OPTIMIZED COPY',
+    '══════════════════════════════════════════════════════════════',
+    '',
+    ...(r.rewrites || []).map(rw =>
+      `  SECTION: ${rw.section}\n\n` +
+      `  ORIGINAL:\n  "${rw.original}"\n\n` +
+      `  REWRITTEN:\n  "${rw.rewritten}"\n\n` +
+      `  WHY THIS LANDS BETTER:\n  ${rw.why}\n\n` +
+      `  ${'─'.repeat(60)}\n`
+    ),
+    '══════════════════════════════════════════════════════════════',
+    '  Generated by VCReady — AI-powered pitch intelligence',
+    '  for Web3 founders. Free to use. No subscription required.',
+    '══════════════════════════════════════════════════════════════'
+  ].join('\n');
+
+  const filename = 'VCReady_Report_' +
+    currentDeckName.replace(/\.[^.]+$/, '').replace(/\s+/g, '_') + '.txt';
+
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('✅ Report downloaded!');
+}
+
+// ──────────────────────────────────────
+// UTILITY
+// ──────────────────────────────────────
+function escHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+</script>
+</body>
+</html>
